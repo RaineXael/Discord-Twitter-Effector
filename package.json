@@ -1,0 +1,23 @@
+{
+  "name": "discord-twitter-effector",
+  "version": "1.0.0",
+  "description": "Turns X links into fxtwitter or vxtwitter links",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RaineXael/Discord-Twitter-Effector.git"
+  },
+  "author": "RaineXael",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RaineXael/Discord-Twitter-Effector/issues"
+  },
+  "homepage": "https://github.com/RaineXael/Discord-Twitter-Effector#readme",
+  "dependencies": {
+    "discord.js": "^14.14.0",
+    "dotenv": "^16.3.1"
+  }
+}
