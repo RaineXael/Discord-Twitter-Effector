@@ -1,11 +1,44 @@
 const { Client, Events, GatewayIntentBits } = require('discord.js');
 require('dotenv').config()
 prompts = require('prompts')
-const token = process.env.BOT_TOKEN // remove this after you've confirmed it is working
+const token = process.env.BOT_TOKEN 
 
+async function postAllMessages(client, messages){
+	const channel = client.channels.cache.get(process.env.CHANNEL_ID_OUTPUT);
+	const allMessages = []
 
-async function fetchAllMessages(count, client) {
-	const channel = client.channels.cache.get(process.env.CHANNEL_ID);
+	//split all messages
+	messages.forEach(message => {
+		const processedMessage = message.content.split('\n');
+		processedMessage.forEach(subMessage =>{
+			console.log(subMessage + ' -- ' + replaceX(subMessage));
+			
+			allMessages.push(replaceX(subMessage));
+		})
+		
+	});
+
+	await allMessages.forEach(async message => {
+		
+		channel.send(message);
+	});
+}
+
+function replaceX(message){
+	if(!message.includes('fxtwitter.com'))
+	{
+		replacedLink = message.replace('twitter.com', 'fxtwitter.com').replace('x.com', 'fxtwitter.com');
+		return replacedLink;
+	}
+	return message;
+}
+
+async function fetchAllMessages(client) {
+
+	const channel = client.channels.cache.get(process.env.CHANNEL_ID_INPUT);
+	if(channel === undefined){
+		throw new Error('Channel is undefined, give a valid accessible Channel ID in the .env file.')
+	}
 	let messages = [];
 
 	// Create message pointer
@@ -15,7 +48,7 @@ async function fetchAllMessages(count, client) {
 
 	while (message) {
 		await channel.messages
-			.fetch({ limit: count, before: message.id })
+			.fetch({ limit: 100, before: message.id })
 			.then(messagePage => {
 				messagePage.forEach(msg => messages.push(msg));
 
@@ -24,22 +57,21 @@ async function fetchAllMessages(count, client) {
 			});
 	}
 
-	messages = await messages.map(elem => {
-		return elem.content;
-	})
+	//filter out the non link texts and separate the other links
 
-	const response = await prompts([
-		{
-			type: 'confirm',
-			name: 'delete',
-			message: `Messages changed! Would you like to post the old messages and remove the old ones?`,
-		}
-	])
+	messages = messages.filter((message) => {
+		//remove all texts including fxtwtter.com
+		return !message.content.includes("//fxtwitter.com");
+	});
+
+	messages = messages.filter((message) => {
+		// Keep messages that include "//twitter.com" or "//x.com"
+		return message.content.includes("//twitter.com") || message.content.includes("//x.com");
+	});
 
 	return messages;
+
 }
-
-
 
 
 // Create a new client instance
@@ -49,23 +81,39 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, async (c) => {
 	console.log(`Ready! Logged in as ${c.user.tag}`);
-
-	const response = await prompts([
-		{
-			type: 'number',
-			name: 'count',
-			message: `How many messages would you like to change?`,
-			initial: 50
-		}
-	])
-	//
-	const messages = await fetchAllMessages(response.count, c);
-	console.log(messages[1].split('\n'));  
-	await console.log(`Bot destroying`);
-	await client.destroy();
+	console.log('Fetching posts...')
+	
+	try{
+		const messages = await fetchAllMessages(c);
+		//console.log(messages);
+		const response = await prompts([
+			{
+				type: 'confirm',
+				name: 'post',
+				message: `${messages.length} messages found! Would you like to post the old messages in the CHANNEL_ID_OUTPUT channel?`,
+			},
+			{
+				type: (prev) => prev ? 'confirm' : null,
+				name: 'delete',
+				message: `Would you like to delete the old links?`,
+			},
+		]);
+		if (response.post === true){
+			await postAllMessages(client,messages);
+		}  
+		
+		
+	}
+	catch (error){
+		console.error('An error occoured in fetching the messages: ' + error)
+	}
+	finally{
+		await console.log(`Bot destroying`);
+		await client.destroy();
+	}
+	
+	
 });
 
 // Log in to Discord with your client's token
 client.login(token);
-
-
