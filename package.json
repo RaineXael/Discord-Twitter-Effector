@@ -19,6 +19,7 @@
   "homepage": "https://github.com/RaineXael/Discord-Twitter-Effector#readme",
   "dependencies": {
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "prompts": "^2.4.2"
   }
 }
