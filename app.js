@@ -17,6 +17,22 @@ async function postAllMessages(client, messages){
 		
 	});
 
+	const response = await prompts([
+		{
+			type: 'confirm',
+			name: 'reverse',
+			message: `Would you like the messages to be posted oldest-first?`,
+		},
+	
+	]);
+
+	//reverse message order so that oldest messages
+	//are posted first
+	if(response.reverse){
+		allMessages.reverse()
+	}
+
+
 	//make strings into promise array to be Promise.all'd
 	messagePromises = allMessages.map(content => {
 		return channel.send(content);
@@ -101,6 +117,7 @@ client.once(Events.ClientReady, async (c) => {
 			},
 			{
 				type: (prev) => prev ? 'confirm' : null,
+				//type:'confirm',
 				name: 'delete',
 				message: `Would you like to delete the old links?`,
 			},
@@ -112,6 +129,7 @@ client.once(Events.ClientReady, async (c) => {
 				await deleteOldMessages(messages)
 			}
 		}  
+		
 		
 		
 	}
