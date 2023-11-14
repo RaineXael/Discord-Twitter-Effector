@@ -7,21 +7,22 @@ async function postAllMessages(client, messages){
 	const channel = client.channels.cache.get(process.env.CHANNEL_ID_OUTPUT);
 	const allMessages = []
 
-	//split all messages
+	//split all messages and process to string
 	messages.forEach(message => {
 		const processedMessage = message.content.split('\n');
 		processedMessage.forEach(subMessage =>{
-			console.log(subMessage + ' -- ' + replaceX(subMessage));
-			
+			//console.log(subMessage + ' -- ' + replaceX(subMessage));
 			allMessages.push(replaceX(subMessage));
 		})
 		
 	});
 
-	await allMessages.forEach(async message => {
-		
-		channel.send(message);
-	});
+	//make strings into promise array to be Promise.all'd
+	messagePromises = allMessages.map(content => {
+		return channel.send(content);
+	})
+
+	await Promise.all(messagePromises);
 }
 
 function replaceX(message){
@@ -73,6 +74,12 @@ async function fetchAllMessages(client) {
 
 }
 
+async function deleteOldMessages(messages){
+	console.log('Deleting all messages!')
+	deletionPromises = messages.map(message => message.delete());
+	await Promise.all(deletionPromises);
+	console.log('Deleting all done!')
+}
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -98,8 +105,12 @@ client.once(Events.ClientReady, async (c) => {
 				message: `Would you like to delete the old links?`,
 			},
 		]);
+		
 		if (response.post === true){
 			await postAllMessages(client,messages);
+			if (response.delete === true){
+				await deleteOldMessages(messages)
+			}
 		}  
 		
 		
